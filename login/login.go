@@ -3,13 +3,12 @@ package login
 import (
 	"encoding/json"
 	"fmt"
+	_ "github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"pureflix-go/db"
 	"pureflix-go/jwt"
 	"pureflix-go/utils"
-
-	_ "github.com/lib/pq"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {

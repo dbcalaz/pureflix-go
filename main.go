@@ -172,7 +172,24 @@ func ActivarCuenta(w http.ResponseWriter, r *http.Request) {
         SET activa = 1, token_validacion = ''
         WHERE token_validacion = $1;
     `
-	db.BaseDeDatos.QueryRow(consulta, token)
+	res, err := db.BaseDeDatos.Exec(consulta, token)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if rows == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func GetUsuario(w http.ResponseWriter, r *http.Request) {

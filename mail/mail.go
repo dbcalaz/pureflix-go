@@ -15,7 +15,7 @@ func EnviarMailDeValidacion(emailUsuario string, tokenActivacion string) {
 	mailPass := os.Getenv("MAIL_PASSWORD")
 	mailHost := os.Getenv("MAIL_HOST")
 	mailPort, _ := strconv.Atoi(os.Getenv("MAIL_PORT"))
-	appPort := os.Getenv("APP_PORT")
+	frontURL := os.Getenv("FRONT_URL")
 
 	m.SetHeader("From", from)
 	m.SetHeader("To", emailUsuario)
@@ -23,7 +23,7 @@ func EnviarMailDeValidacion(emailUsuario string, tokenActivacion string) {
 	m.SetBody("text/html", `
 		<h2>Bienvenido</h2>
 		<p>Para activar tu cuenta:</p>
-		<a href="http://localhost:`+appPort+`/activar?token=`+tokenActivacion+`">
+		<a href="`+frontURL+`/activar-cuenta?token=`+tokenActivacion+`">
 			Activar cuenta
 		</a>
 	`)
