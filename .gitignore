@@ -1,0 +1,16 @@
+# Env
+.env
+
+# Go
+/bin/
+/pkg/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
