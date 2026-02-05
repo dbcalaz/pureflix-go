@@ -68,6 +68,8 @@ func main() {
 	router.HandleFunc("/getContenido", GetContenido)
 	router.HandleFunc("/getCategorias", GetCategorias)
 
+	router.HandleFunc("/getImagen", GetImagen)
+
 	fmt.Println("Iniciando servidor")
 
 	port := os.Getenv("APP_PORT")
@@ -595,4 +597,44 @@ func GetCategorias(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 	w.Write(respuestaJson)
+}
+
+func GetImagen(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Max-Age", "15")
+
+	nombreImagen := ""
+	fmt.Sscanf(r.URL.Query().Get("imagen"), "%s", &nombreImagen)
+
+	tipo := ""
+	fmt.Sscanf(r.URL.Query().Get("tipo"), "%s", &tipo)
+
+	fileInfo, err := os.Stat("imagenes/" + nombreImagen)
+	if err != nil {
+		http.Error(w, "Imagen no encontrada", http.StatusNotFound)
+		return
+	}
+
+	file, err := os.Open("imagenes/" + nombreImagen)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer file.Close()
+	data := make([]byte, fileInfo.Size())
+	count, err := file.Read(data)
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println(count, nombreImagen)
+
+	w.WriteHeader(http.StatusOK)
+
+	if tipo == "blob" {
+		w.Header().Set("Content-Type", "image/jpg; charset=utf-8")
+		w.Write(data)
+	} else {
+		w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
+		w.Write([]byte(data))
+	}
 }

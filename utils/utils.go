@@ -162,3 +162,10 @@ func DevolverError(w http.ResponseWriter, error int) {
 
 	http.Error(w, "Error interno", http.StatusInternalServerError)
 }
+
+func ToB64(texto string) string {
+	origen := []byte(fmt.Sprintf("%s", texto))
+	destino := make([]byte, base64.StdEncoding.EncodedLen(len(texto)))
+	base64.StdEncoding.Encode(destino, origen)
+	return string(destino)
+}
