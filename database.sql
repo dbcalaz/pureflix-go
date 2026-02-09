@@ -68,8 +68,8 @@ CREATE TABLE usuario(
                         id serial PRIMARY KEY,
                         nombre_usuario text UNIQUE NOT NULL ,
                         email CITEXT UNIQUE NOT NULL ,
-                        foto_perfil text,
-                        pass text NOT NULL ,
+                        foto_perfil TEXT NOT NULL DEFAULT 'porDefault.png',
+                        pass text NOT NULL,
                         token_validacion text,
                         token_recuperacion text,
                         activa int DEFAULT 0,
@@ -79,6 +79,17 @@ CREATE TABLE usuario(
 
 GRANT SELECT, INSERT, UPDATE ON usuario TO pgadmin;
 GRANT USAGE ON SEQUENCE usuario_id_seq TO pgadmin;
+
+CREATE TABLE favorito(
+                        id serial PRIMARY KEY,
+                        id_usuario  int,
+                        id_contenido int,
+                        CONSTRAINT fk_usuario_favorito FOREIGN KEY (id_usuario) REFERENCES usuario(id),
+                        CONSTRAINT fk_contenido_favorito FOREIGN KEY (id_contenido) REFERENCES contenido(id)
+)
+
+GRANT SELECT, INSERT, UPDATE ON favorito TO pgadmin;
+GRANT USAGE ON SEQUENCE favorito_id_seq TO pgadmin;
 
 /*Inserts*/
 INSERT INTO tipo_contenido (descripcion)

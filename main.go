@@ -58,6 +58,7 @@ func main() {
 	router.HandleFunc("/activar", ActivarCuenta)
 
 	router.HandleFunc("/login", login.Login)
+	router.HandleFunc("/validarToken", login.ValidarToken)
 
 	router.HandleFunc("/recuperarContrasena", RecuperarContrasena)
 	router.HandleFunc("/actualizarContrasena", ActualizarContrasena)
@@ -275,20 +276,20 @@ func GetDatosUsuario(w http.ResponseWriter, r *http.Request) {
 	fmt.Sscanf(r.URL.Query().Get("token"), "%s", &token)
 
 	usuario, errorUsuario := jwt.GetUsernameFromToken(token)
-	if errorUsuario != nil { // no se obtiene usuario a partir del token, debe estar expirado
+	if errorUsuario != nil {
 		utils.DevolverError(w, http.StatusUnauthorized)
-	} else {
-		w.WriteHeader(http.StatusOK)
+		return
 	}
 
 	type Usuario struct {
-		NombreUsuario string         `json:"nombre_usuario"`
-		Email         string         `json:"email"`
-		FotoPerfil    sql.NullString `json:"foto_perfil"`
-		MetodoPago    int            `json:"metodo_pago"`
+		NombreUsuario string `json:"nombre_usuario"`
+		Email         string `json:"email"`
+		FotoPerfil    string `json:"foto_perfil"`
+		MetodoPago    int    `json:"metodo_pago"`
+		//Favoritos  []Favorito `json:"favoritos"`
 	}
 
-	consulta := `SELECT nombre_usuario, email, COALESCE(foto_perfil, ''), metodo_pago FROM usuario WHERE nombre_usuario = $1`
+	consulta := `SELECT nombre_usuario, email, foto_perfil, metodo_pago FROM usuario WHERE nombre_usuario = $1`
 	row := db.BaseDeDatos.QueryRow(consulta, usuario)
 
 	var u Usuario
@@ -332,10 +333,9 @@ func ActualizarUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	usuario, errorUsuario := jwt.GetUsernameFromToken(datos["token"])
-	if errorUsuario != nil { // no se obtiene usuario a partir del token, debe estar expirado
+	if errorUsuario != nil {
 		utils.DevolverError(w, http.StatusUnauthorized)
-	} else {
-		w.WriteHeader(http.StatusOK)
+		return
 	}
 
 	var metodoPagoID int
