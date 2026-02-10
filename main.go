@@ -65,6 +65,7 @@ func main() {
 
 	router.HandleFunc("/getDatosUsuario", GetDatosUsuario)
 	router.HandleFunc("/actualizarUsuario", ActualizarUsuario)
+	router.HandleFunc("/actualizarFotoPerfil", ActualizarFotoPerfil)
 
 	router.HandleFunc("/getContenido", GetContenido)
 	router.HandleFunc("/getCategorias", GetCategorias)
@@ -382,6 +383,41 @@ func ActualizarUsuario(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"mensaje":"Datos actualizados correctamente"}`))
 	}
+}
+func ActualizarFotoPerfil(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	datos, err := utils.RecibeDatosPut(r, nil)
+	if err != 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"mensaje":"Error leyendo datos recibidos"}`))
+		return
+	}
+
+	usuario, errorUsuario := jwt.GetUsernameFromToken(datos["token"])
+	if errorUsuario != nil {
+		utils.DevolverError(w, http.StatusUnauthorized)
+		return
+	}
+
+	consulta := `UPDATE usuario SET foto_perfil = $1 WHERE nombre_usuario = $2;`
+	_, errorConsulta := db.BaseDeDatos.Exec(consulta, datos["foto_perfil"], usuario)
+
+	if errorConsulta != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"mensaje":"Error al actualizar la foto de perfil"}`))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"mensaje":"Foto de perfil actualizada correctamente"}`))
 }
 
 func GetContenido(w http.ResponseWriter, r *http.Request) {

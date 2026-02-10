@@ -80,16 +80,25 @@ CREATE TABLE usuario(
 GRANT SELECT, INSERT, UPDATE ON usuario TO pgadmin;
 GRANT USAGE ON SEQUENCE usuario_id_seq TO pgadmin;
 
-CREATE TABLE favorito(
-                        id serial PRIMARY KEY,
-                        id_usuario  int,
-                        id_contenido int,
-                        CONSTRAINT fk_usuario_favorito FOREIGN KEY (id_usuario) REFERENCES usuario(id),
-                        CONSTRAINT fk_contenido_favorito FOREIGN KEY (id_contenido) REFERENCES contenido(id)
-)
+CREATE TABLE favorito (
+                          id_usuario   INT NOT NULL,
+                          id_contenido INT NOT NULL,
+                          fecha_alta   TIMESTAMP DEFAULT now(),
 
-GRANT SELECT, INSERT, UPDATE ON favorito TO pgadmin;
-GRANT USAGE ON SEQUENCE favorito_id_seq TO pgadmin;
+                          PRIMARY KEY (id_usuario, id_contenido),
+
+                          CONSTRAINT fk_favorito_usuario
+                              FOREIGN KEY (id_usuario)
+                                  REFERENCES usuario(id)
+                                  ON DELETE CASCADE,
+
+                          CONSTRAINT fk_favorito_contenido
+                              FOREIGN KEY (id_contenido)
+                                  REFERENCES contenido(id)
+                                  ON DELETE CASCADE
+);
+
+GRANT SELECT, INSERT, DELETE ON favorito TO pgadmin;
 
 /*Inserts*/
 INSERT INTO tipo_contenido (descripcion)
