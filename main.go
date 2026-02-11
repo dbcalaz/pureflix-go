@@ -62,15 +62,17 @@ func main() {
 
 	router.HandleFunc("/recuperarContrasena", RecuperarContrasena)
 	router.HandleFunc("/actualizarContrasena", ActualizarContrasena)
+	router.HandleFunc("/actualizarFotoPerfil", ActualizarFotoPerfil)
 
 	router.HandleFunc("/getDatosUsuario", GetDatosUsuario)
 	router.HandleFunc("/actualizarUsuario", ActualizarUsuario)
-	router.HandleFunc("/actualizarFotoPerfil", ActualizarFotoPerfil)
 
 	router.HandleFunc("/getContenido", GetContenido)
 	router.HandleFunc("/getCategorias", GetCategorias)
-
 	router.HandleFunc("/getImagen", GetImagen)
+
+	router.HandleFunc("/marcarFavorito", MarcarFavorito)
+	router.HandleFunc("/eliminarFavorito", EliminarFavorito)
 
 	fmt.Println("Iniciando servidor")
 
@@ -424,7 +426,6 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Access-Control-Max-Age", "15")
-	w.WriteHeader(http.StatusOK)
 
 	idTipo := 0
 	fmt.Sscanf(r.URL.Query().Get("tipo"), "%d", &idTipo)
@@ -434,6 +435,23 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 
 	palabra := ""
 	fmt.Sscanf(r.URL.Query().Get("palabra"), "%s", &palabra)
+
+	favorito := "false"
+	fmt.Sscanf(r.URL.Query().Get("favorito"), "%s", &favorito)
+
+	token := ""
+	fmt.Sscanf(r.URL.Query().Get("token"), "%s", &token)
+
+	var usuario string
+
+	if favorito == "true" {
+		usuarioExtraido, errToken := jwt.GetUsernameFromToken(token)
+		if errToken != nil {
+			utils.DevolverError(w, http.StatusUnauthorized)
+			return
+		}
+		usuario = usuarioExtraido
+	}
 
 	consulta := `
 	SELECT DISTINCT 
@@ -448,6 +466,7 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 	`
 
 	filtros := ""
+	tieneJoinFavorito := false
 
 	if idCategoria > 0 {
 		consulta += `
@@ -465,13 +484,29 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 		filtros += " AND unaccent(c.titulo) ILIKE unaccent('%" + palabra + "%')"
 	}
 
+	if favorito == "true" {
+		consulta += `JOIN favorito f ON f.id_contenido = c.id
+					JOIN usuario u ON u.id = f.id_usuario`
+		filtros += fmt.Sprintf(" AND u.nombre_usuario = $1")
+		tieneJoinFavorito = true
+		//TODO: ver inyecciones
+	}
+
 	consulta += `
 	WHERE 1=1
 	` + filtros
 
-	rows, errbd := db.BaseDeDatos.Query(consulta)
+	var rows *sql.Rows
+	var errbd error
+
+	if tieneJoinFavorito {
+		rows, errbd = db.BaseDeDatos.Query(consulta, usuario)
+	} else {
+		rows, errbd = db.BaseDeDatos.Query(consulta)
+	}
+
 	if errbd != nil {
-		fmt.Println("Error en la base de datos:", errbd)
+		utils.DevolverError(w, http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -599,6 +634,7 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.WriteHeader(http.StatusOK)
 	w.Write(respuestaJson)
 }
 func GetCategorias(w http.ResponseWriter, r *http.Request) {
@@ -634,7 +670,6 @@ func GetCategorias(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(respuestaJson)
 }
-
 func GetImagen(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Max-Age", "15")
@@ -673,4 +708,84 @@ func GetImagen(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
 		w.Write([]byte(data))
 	}
+}
+
+func MarcarFavorito(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	datos, err := utils.RecibeDatosPost(r, nil)
+	if err != 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"mensaje":"Error leyendo datos"}`))
+		return
+	}
+
+	_, id, errToken := jwt.GetUsernameAndIdFromToken(datos["token"])
+	if errToken != nil {
+		utils.DevolverError(w, http.StatusUnauthorized)
+		return
+	}
+
+	consulta := `INSERT INTO favorito (id_usuario, id_contenido) VALUES ($1, $2)`
+	_, errbd := db.BaseDeDatos.Exec(consulta, id, datos["id_contenido"])
+
+	if errbd != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"mensaje":"Error al marcar como favorito"}`))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"mensaje":"Agergado como favorito correctamente"}`))
+}
+func EliminarFavorito(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Methods", "DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if r.Method != http.MethodDelete {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	idContenido := 0
+	fmt.Sscanf(r.URL.Query().Get("id_contenido"), "%d", &idContenido)
+
+	token := ""
+	fmt.Sscanf(r.URL.Query().Get("token"), "%s", &token)
+
+	usuario, errorUsuario := jwt.GetUsernameFromToken(token)
+	if errorUsuario != nil {
+		utils.DevolverError(w, http.StatusUnauthorized)
+		return
+	}
+
+	consulta := `DELETE FROM favorito f
+				USING usuario u
+				WHERE u.id = f.id_usuario
+				  AND u.nombre_usuario = $1
+				  AND f.id_contenido = $2;
+				`
+	_, errbd := db.BaseDeDatos.Exec(consulta, usuario, idContenido)
+
+	if errbd != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"mensaje":"Error"}`))
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"mensaje":"Se quitó de favorito correctamente"}`))
 }
