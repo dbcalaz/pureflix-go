@@ -442,6 +442,9 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 	token := ""
 	fmt.Sscanf(r.URL.Query().Get("token"), "%s", &token)
 
+	proximo := "false"
+	fmt.Sscanf(r.URL.Query().Get("proximo"), "%s", &proximo)
+
 	var usuario string
 
 	if favorito == "true" {
@@ -490,6 +493,12 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 		filtros += fmt.Sprintf(" AND u.nombre_usuario = $1")
 		tieneJoinFavorito = true
 		//TODO: ver inyecciones
+	}
+
+	if proximo == "true" {
+		filtros += " AND c.es_proximo = true "
+	} else {
+		filtros += " AND c.es_proximo = false "
 	}
 
 	consulta += `

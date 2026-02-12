@@ -24,6 +24,7 @@ CREATE TABLE contenido(
                           duracion int,
                           anio date,
                           tipo_contenido int,
+                          es_proximo boolean DEFAULT false,
                           FOREIGN KEY (tipo_contenido) REFERENCES tipo_contenido(id)
 );
 
@@ -68,7 +69,7 @@ CREATE TABLE usuario(
                         id serial PRIMARY KEY,
                         nombre_usuario text UNIQUE NOT NULL ,
                         email CITEXT UNIQUE NOT NULL ,
-                        foto_perfil TEXT NOT NULL DEFAULT 'porDefault.png',
+                        foto_perfil TEXT NOT NULL DEFAULT 'avatar1.png',
                         pass text NOT NULL,
                         token_validacion text,
                         token_recuperacion text,
@@ -102,7 +103,7 @@ GRANT SELECT, INSERT, DELETE ON favorito TO pgadmin;
 
 /*Inserts*/
 INSERT INTO tipo_contenido (descripcion)
-VALUES ('pelicula'),('serie'),('documental'),('miniserie'),('proximo');
+VALUES ('pelicula'),('serie'),('documental'),('miniserie');
 
 INSERT INTO genero (descripcion) VALUES
                                      ('Acción'),
@@ -118,7 +119,8 @@ INSERT INTO genero (descripcion) VALUES
                                      ('Crimen'),
                                      ('Misterio'),
                                      ('Documental'),
-                                     ('Familia');
+                                     ('Familia'),
+                                     ('Deportes');
 
 INSERT INTO actor (nombre, apellido, wikipedia)
 VALUES('Keanu', 'Reeves', 'https://es.wikipedia.org/wiki/Keanu_Reeves'),
@@ -228,10 +230,77 @@ VALUES('Keanu', 'Reeves', 'https://es.wikipedia.org/wiki/Keanu_Reeves'),
 ('Sadie', 'Sink', 'https://en.wikipedia.org/wiki/Sadie_Sink'),
 ('Dacre', 'Montgomery', 'https://en.wikipedia.org/wiki/Dacre_Montgomery'),
 ('Sean', 'Astin', 'https://en.wikipedia.org/wiki/Sean_Astin'),
-('Paul', 'Reiser', 'https://en.wikipedia.org/wiki/Paul_Reiser');
+('Paul', 'Reiser', 'https://en.wikipedia.org/wiki/Paul_Reiser'),
+
+('Jason', 'Sudeikis', 'https://es.wikipedia.org/wiki/Jason_Sudeikis'),
+('Hannah', 'Waddingham', 'https://es.wikipedia.org/wiki/Hannah_Waddingham'),
+('Brett', 'Goldstein', 'https://es.wikipedia.org/wiki/Brett_Goldstein'),
+('Juno', 'Temple', 'https://es.wikipedia.org/wiki/Juno_Temple'),
+('Jeremy', 'Swift', 'https://es.wikipedia.org/wiki/Jeremy_Swift'),
+
+('Bryce', 'Dallas Howard', 'https://en.wikipedia.org/wiki/Bryce_Dallas_Howard'),
+('Jon', 'Hamm', 'https://en.wikipedia.org/wiki/Jon_Hamm'),
+('Daniel', 'Kaluuya', 'https://en.wikipedia.org/wiki/Daniel_Kaluuya'),
+('Jodie', 'Whittaker', 'https://en.wikipedia.org/wiki/Jodie_Whittaker'),
+('Jesse', 'Plemons', 'https://en.wikipedia.org/wiki/Jesse_Plemons'),
+
+('Ralph', 'Fiennes', 'https://en.wikipedia.org/wiki/Ralph_Fiennes'),
+('Stanley', 'Tucci', 'https://en.wikipedia.org/wiki/Stanley_Tucci'),
+('John', 'Lithgow', 'https://en.wikipedia.org/wiki/John_Lithgow'),
+('Sergio', 'Castellitto', 'https://en.wikipedia.org/wiki/Sergio_Castellitto'),
+('Isabella', 'Rossellini', 'https://en.wikipedia.org/wiki/Isabella_Rossellini'),
+
+('Brec', 'Bassinger', 'https://en.wikipedia.org/wiki/Brec_Bassinger'),
+
+('Timothée', 'Chalamet', 'https://en.wikipedia.org/wiki/Timoth%C3%A9e_Chalamet'),
+('Zendaya', '', 'https://en.wikipedia.org/wiki/Zendaya'),
+('Rebecca', 'Ferguson', 'https://en.wikipedia.org/wiki/Rebecca_Ferguson'),
+('Josh', 'Brolin', 'https://en.wikipedia.org/wiki/Josh_Brolin'),
+('Austin', 'Butler', 'https://en.wikipedia.org/wiki/Austin_Butler'),
+('Florence', 'Pugh', 'https://en.wikipedia.org/wiki/Florence_Pugh'),
+
+('Brad', 'Pitt', 'https://en.wikipedia.org/wiki/Brad_Pitt'),
+('Damson', 'Idris', 'https://en.wikipedia.org/wiki/Damson_Idris'),
+('Javier', 'Bardem', 'https://en.wikipedia.org/wiki/Javier_Bardem'),
+
+('Tom', 'Cruise', 'https://en.wikipedia.org/wiki/Tom_Cruise'),
+('Hayley', 'Atwell', 'https://en.wikipedia.org/wiki/Hayley_Atwell'),
+('Simon', 'Pegg', 'https://en.wikipedia.org/wiki/Simon_Pegg'),
+('Ving', 'Rhames', 'https://en.wikipedia.org/wiki/Ving_Rhames'),
+
+('Ryan', 'Phillippe', 'https://en.wikipedia.org/wiki/Ryan_Phillippe'),
+('Nathalie', 'Kelley', 'https://en.wikipedia.org/wiki/Nathalie_Kelley'),
+
+('Adam', 'Scott', 'https://en.wikipedia.org/wiki/Adam_Scott_(actor)'),
+('Patricia', 'Arquette', 'https://en.wikipedia.org/wiki/Patricia_Arquette'),
+('John', 'Turturro', 'https://en.wikipedia.org/wiki/John_Turturro'),
+('Christopher', 'Walken', 'https://en.wikipedia.org/wiki/Christopher_Walken'),
+
+('Julianne', 'Moore', 'https://en.wikipedia.org/wiki/Julianne_Moore'),
+('Meghann', 'Fahy', 'https://en.wikipedia.org/wiki/Meghann_Fahy'),
+
+('Jeremy', 'Allen White', 'https://en.wikipedia.org/wiki/Jeremy_Allen_White'),
+('Ayo', 'Edebiri', 'https://en.wikipedia.org/wiki/Ayo_Edebiri'),
+('Ebon', 'Moss-Bachrach', 'https://en.wikipedia.org/wiki/Ebon_Moss-Bachrach'),
+
+('Nathan', 'Fillion', 'https://en.wikipedia.org/wiki/Nathan_Fillion'),
+('Melissa', 'O''Neil', 'https://en.wikipedia.org/wiki/Melissa_O%27Neil'),
+
+('Cynthia', 'Erivo', 'https://en.wikipedia.org/wiki/Cynthia_Erivo'),
+('Ariana', 'Grande', 'https://en.wikipedia.org/wiki/Ariana_Grande'),
+('Jonathan', 'Bailey', 'https://en.wikipedia.org/wiki/Jonathan_Bailey'),
+
+('Olivia', 'Colman', 'https://en.wikipedia.org/wiki/Olivia_Colman'),
+('Hugh', 'Grant', 'https://en.wikipedia.org/wiki/Hugh_Grant'),
+
+('Melanie', 'Lynskey', 'https://en.wikipedia.org/wiki/Melanie_Lynskey'),
+('Christina', 'Ricci', 'https://en.wikipedia.org/wiki/Christina_Ricci'),
+
+('Penn', 'Badgley', 'https://en.wikipedia.org/wiki/Penn_Badgley'),
+('Victoria', 'Pedretti', 'https://en.wikipedia.org/wiki/Victoria_Pedretti');
 
 INSERT INTO contenido
-(titulo, resumen, link_trailer, imagen, duracion, anio, tipo_contenido)
+(titulo, resumen, link_trailer, imagen, duracion, anio, tipo_contenido, es_proximo)
 VALUES
 (
     'Constantine',
@@ -240,7 +309,8 @@ VALUES
     'constantine.jpg',
     121,
     '2005-01-01',
-    1
+    1,
+    false
 ),
 (
     'Búsqueda Implacable 3',
@@ -249,7 +319,8 @@ VALUES
     'implacable.webp',
     109,
     '2014-01-01',
-    1
+    1,
+    false
 ),
 (
     'Deadpool & Wolverine',
@@ -258,7 +329,8 @@ VALUES
     'deadpool.jpg',
     128,
     '2024-01-01',
-    1
+    1,
+    false
 ),
 (
     'Super Mario Bros: La Película',
@@ -267,7 +339,8 @@ VALUES
     'marioBros.jpg',
     92,
     '2023-01-01',
-    1
+    1,
+    false
 ),
 (
     'Animales Fantásticos y dónde encontrarlos',
@@ -276,7 +349,8 @@ VALUES
     'animales.jpg',
     133,
     '2016-01-01',
-    1
+    1,
+    false
 ),
 (
     'Toy Story 2',
@@ -285,7 +359,8 @@ VALUES
     'toyStory2.webp',
     92,
     '1999-01-01',
-    1
+    1,
+    false
 ),
 (
     'Lilo y Stitch',
@@ -294,7 +369,8 @@ VALUES
     'lilo2.webp',
     108,
     '2024-01-01',
-    1
+    1,
+    false
 ),
 (
     'Los Simpsons',
@@ -303,7 +379,8 @@ VALUES
     'simpsons.webp',
     NULL,
     '1989-01-01',
-    2
+    2,
+    false
 ),
 (
     'El Eternauta',
@@ -312,7 +389,8 @@ VALUES
     'eternauta.jpeg',
     NULL,
     '2025-01-01',
-    2
+    2,
+    false
 ),
 (
     'Breaking Bad',
@@ -321,7 +399,8 @@ VALUES
     'breakingBad.webp',
     NULL,
     '2008-01-01',
-    2
+    2,
+    false
 ),
 (
     'Grey''s Anatomy',
@@ -330,7 +409,8 @@ VALUES
     'grey.webp',
     NULL,
     '2005-01-01',
-    2
+    2,
+    false
 ),
 (
     'Better Call Saul',
@@ -339,7 +419,8 @@ VALUES
     'saul.jpg',
     NULL,
     '2015-01-01',
-    2
+    2,
+    false
 ),
 (
     'Ginny & Georgia',
@@ -348,7 +429,8 @@ VALUES
     'GIINYPORT.jpg',
     NULL,
     '2021-01-01',
-    2
+    2,
+    false
 ),
 (
     'Atrapados',
@@ -357,7 +439,8 @@ VALUES
     'atrapad.webp',
     NULL,
     '2025-01-01',
-    2
+    2,
+    false
 ),
 (
     'Stranger Things',
@@ -366,8 +449,64 @@ VALUES
     'stranger.jpg',
     NULL,
     '2016-01-01',
-    2
-);
+    2,
+    false
+),
+(
+    'Ted Lasso',
+    'Ted Lasso es una serie de comedia deportiva que sigue a un entrenador de fútbol americano contratado para dirigir un equipo de fútbol inglés, donde su optimismo y liderazgo poco convencional transforman al equipo y a quienes lo rodean.',
+    'https://www.youtube.com/embed/3u7EIiohs6U',
+    'TedLasso.jpg',
+    30,
+    '2020-01-01',
+    2,
+    true
+),
+(
+    'Black Mirror',
+    'Serie antológica de ciencia ficción que explora el impacto oscuro de la tecnología en la sociedad moderna.',
+    'https://www.youtube.com/embed/r8LEV1B3lrA',
+    'BlackMirror.jpg',
+    0,
+    '2011-01-01',
+    2,
+    true
+),
+(
+    'Conclave',
+    'Película de suspenso político que sigue a un cardenal en medio del proceso de elección del nuevo Papa en medio de secretos y luchas de poder.',
+    'https://www.youtube.com/watch?v=JX9jasdi3ic',
+    'Conclave.jpg',
+    120,
+    '2024-01-01',
+    1,
+    true
+),
+('Destino Final', 'Nueva entrega de la saga de terror donde un grupo de personas intenta escapar de una muerte predestinada.', 'https://www.youtube.com/embed/HMPRnMyhI0g', 'DestinoFinal.jpg', 110, '2025-01-01', 1, true),
+
+('Dune: Parte Dos', 'Paul Atreides se une a los Fremen para vengarse de quienes destruyeron a su familia mientras enfrenta su destino profético.', 'https://www.youtube.com/watch?v=Way9Dexny3w', 'Dune2.jpg', 166, '2024-01-01', 1, true),
+
+('Formula 1', 'Drama deportivo ambientado en el mundo de la Fórmula 1, centrado en un piloto veterano que regresa a la competición.', 'https://www.youtube.com/embed/8yh9BPUBbbQ', 'Formula1.jpg', 130, '2025-01-01', 1, true),
+
+('Misión Imposible: Sentencia Final', 'Ethan Hunt regresa en una nueva misión imposible enfrentando amenazas globales.', 'https://www.youtube.com/embed/cPaEof1KJDg', 'MisionImposible.jpg', 163, '2024-01-01', 1, true),
+
+('Motorheads', 'Serie dramática centrada en jóvenes apasionados por las carreras clandestinas y el mundo automotor.', 'https://www.youtube.com/embed/z5P2SjWir3I', 'Motorheads.jpg', 0, '2025-01-01', 2, true),
+
+('Severance', 'Serie de ciencia ficción donde empleados se someten a un procedimiento que separa sus recuerdos laborales de los personales.', 'https://www.youtube.com/watch?v=xEQP4VVuyrY', 'Severance.jpg', 0, '2022-01-01', 2, true),
+
+('Sirens', 'Drama oscuro que sigue a mujeres atrapadas en dinámicas de poder y manipulación.', 'https://www.youtube.com/embed/nxSpZ9khchU', 'Sirens.jpg', 0, '2025-01-01', 2, true),
+
+('The Bear', 'Serie dramática que sigue a un joven chef de alta cocina que regresa a Chicago para manejar el restaurante familiar.', 'https://www.youtube.com/embed/gBmkI4jlaIo', 'TheBear.jpg', 0, '2022-01-01', 2, true),
+
+('The Rookie', 'Serie policial que sigue al novato de mayor edad en el Departamento de Policía de Los Ángeles.', 'https://www.youtube.com/embed/CdrzCYEC8IQ', 'TheRookie.jpg', 0, '2018-01-01', 2, true),
+
+('Wicked', 'Adaptación cinematográfica del exitoso musical que cuenta la historia no contada de las brujas de Oz.', 'https://www.youtube.com/embed/6COmYeLsz4c', 'Wicked.jpg', 160, '2024-01-01', 1, true),
+
+('Wonka', 'Historia de los orígenes del excéntrico chocolatero Willy Wonka.', 'https://www.youtube.com/watch?v=otNh9bTjXWg', 'Wonka.jpg', 116, '2023-01-01', 1, true),
+
+('Yellowjackets', 'Serie dramática que mezcla supervivencia y thriller psicológico tras un accidente aéreo.', 'https://www.youtube.com/embed/7nu4--9IPRY', 'YellowJackets.jpg', 0, '2021-01-01', 2, true),
+
+('You', 'Serie de suspenso psicológico que sigue a un hombre obsesivo que se infiltra en la vida de las mujeres que le interesan.', 'https://www.youtube.com/embed/6YD0viMgZpg', 'You.jpg', 0, '2018-01-01', 2, true);
 
 INSERT INTO contenido_genero (id_contenido, id_genero)
 VALUES
@@ -431,11 +570,71 @@ VALUES
 (15, 6),
 (15, 10),
 (15, 9),
-(15, 5);
+(15, 5),
+
+(16, 3),
+(16, 4),
+(16, 15),
+
+(17, 6),
+(17, 4),
+(17, 12),
+
+(18, 1),
+(18, 9),
+(18, 4),
+
+(19, 10),
+(19, 9),
+
+(20, 6),
+(20, 2),
+(20, 1),
+(20, 4),
+
+(21, 4),
+(21, 15),
+(21, 1),
+
+(22, 1),
+(22, 2),
+(22, 9),
+
+(23, 4),
+(23, 1),
+(24, 6),
+(24, 4),
+(24, 12),
+(24, 9),
+
+(25, 4),
+(25, 9),
+
+(26, 4),
+(26, 3),
+
+(27, 4),
+(27, 11),
+(27, 1),
+
+(28, 5),
+(28, 2),
+(28, 14),
+
+(29, 5),
+(29, 14),
+(29, 3),
+
+(30, 4),
+(30, 9),
+(30, 12),
+
+(31, 9),
+(31, 4),
+(31, 11);
 
 INSERT INTO contenido_actor (id_contenido, id_actor)
 VALUES
-
 (1, 1),
 (1, 2),
 (1, 3),
@@ -543,7 +742,75 @@ VALUES
 (15, 91),
 (15, 92),
 (15, 93),
-(15, 94);
+(15, 94),
+
+(16, 95),
+(16, 96),
+(16, 97),
+(16, 98),
+(16, 99),
+
+(17, 100),
+(17, 101),
+(17, 102),
+(17, 103),
+(17, 104),
+
+(18, 105),
+(18, 106),
+(18, 107),
+(18, 108),
+(18, 109),
+
+(19, 110),
+
+(20, 111),
+(20, 112),
+(20, 113),
+(20, 114),
+(20, 115),
+(20, 116),
+
+(21, 117),
+(21, 118),
+(21, 119),
+
+(22, 120),
+(22, 121),
+(22, 122),
+(22, 123),
+
+(23, 124),
+(23, 125),
+
+(24, 126),
+(24, 127),
+(24, 128),
+(24, 129),
+
+(25, 130),
+(25, 131),
+
+(26, 132),
+(26, 133),
+(26, 134),
+
+(27, 135),
+(27, 136),
+
+(28, 137),
+(28, 138),
+(28, 139),
+
+(29, 111),
+(29, 140),
+(29, 141),
+
+(30, 142),
+(30, 143),
+
+(31, 144),
+(31, 145);
 
 /*Stranger things*/
 INSERT INTO temporada (nro, id_serie) VALUES (1, 15);
