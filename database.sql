@@ -101,6 +101,26 @@ CREATE TABLE favorito (
 
 GRANT SELECT, INSERT, DELETE ON favorito TO pgadmin;
 
+CREATE TABLE notificacion (
+                          id_usuario   INT NOT NULL,
+                          id_contenido INT NOT NULL,
+                          fecha_alta   TIMESTAMP DEFAULT now(),
+
+                          PRIMARY KEY (id_usuario, id_contenido),
+
+                          CONSTRAINT fk_notificacion_usuario
+                              FOREIGN KEY (id_usuario)
+                                  REFERENCES usuario(id)
+                                  ON DELETE CASCADE,
+
+                          CONSTRAINT fk_notificacion_contenido
+                              FOREIGN KEY (id_contenido)
+                                  REFERENCES contenido(id)
+                                  ON DELETE CASCADE
+);
+
+GRANT SELECT, INSERT, DELETE ON notificacion TO pgadmin;
+
 /*Inserts*/
 INSERT INTO tipo_contenido (descripcion)
 VALUES ('pelicula'),('serie'),('documental'),('miniserie');

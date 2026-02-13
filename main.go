@@ -74,6 +74,9 @@ func main() {
 	router.HandleFunc("/marcarFavorito", MarcarFavorito)
 	router.HandleFunc("/eliminarFavorito", EliminarFavorito)
 
+	router.HandleFunc("/marcarNotificacion", MarcarNotificacion)
+	router.HandleFunc("/eliminarNotificacion", EliminarNotificacion)
+
 	fmt.Println("Iniciando servidor")
 
 	port := os.Getenv("APP_PORT")
@@ -445,9 +448,12 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 	proximo := "false"
 	fmt.Sscanf(r.URL.Query().Get("proximo"), "%s", &proximo)
 
+	notificacion := "false"
+	fmt.Sscanf(r.URL.Query().Get("notificacion"), "%s", &notificacion)
+
 	var usuario string
 
-	if favorito == "true" {
+	if favorito == "true" || notificacion == "true" {
 		usuarioExtraido, errToken := jwt.GetUsernameFromToken(token)
 		if errToken != nil {
 			utils.DevolverError(w, http.StatusUnauthorized)
@@ -464,12 +470,14 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 		c.imagen,
 		c.resumen,
 		EXTRACT(YEAR FROM c.anio) AS anio,
-		c.tipo_contenido
+		c.tipo_contenido,
+		es_proximo
 	FROM contenido c
 	`
 
 	filtros := ""
 	tieneJoinFavorito := false
+	tieneJoinNotificacion := false
 
 	if idCategoria > 0 {
 		consulta += `
@@ -495,6 +503,13 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 		//TODO: ver inyecciones
 	}
 
+	if notificacion == "true" {
+		consulta += `JOIN notificacion n ON n.id_contenido = c.id
+					JOIN usuario u ON u.id = n.id_usuario`
+		filtros += fmt.Sprintf(" AND u.nombre_usuario = $1")
+		tieneJoinNotificacion = true
+	}
+
 	if proximo == "true" {
 		filtros += " AND c.es_proximo = true "
 	} else {
@@ -508,7 +523,7 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 	var rows *sql.Rows
 	var errbd error
 
-	if tieneJoinFavorito {
+	if tieneJoinFavorito || tieneJoinNotificacion {
 		rows, errbd = db.BaseDeDatos.Query(consulta, usuario)
 	} else {
 		rows, errbd = db.BaseDeDatos.Query(consulta)
@@ -553,6 +568,7 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 		Anio         int         `json:"anio"`
 		Tipo         int         `json:"tipo"`
 		Temporadas   []Temporada `json:"temporadas,omitempty"`
+		Es_proximo   bool        `json:"es_proximo"`
 	}
 
 	var Contenidos []Contenido
@@ -567,6 +583,7 @@ func GetContenido(w http.ResponseWriter, r *http.Request) {
 			&c.Resumen,
 			&c.Anio,
 			&c.Tipo,
+			&c.Es_proximo,
 		)
 
 		// Géneros
@@ -797,4 +814,89 @@ func EliminarFavorito(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"mensaje":"Se quitó de favorito correctamente"}`))
+}
+
+func MarcarNotificacion(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	datos, err := utils.RecibeDatosPost(r, nil)
+	if err != 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"mensaje":"Error leyendo datos"}`))
+		return
+	}
+
+	_, id, errToken := jwt.GetUsernameAndIdFromToken(datos["token"])
+	if errToken != nil {
+		utils.DevolverError(w, http.StatusUnauthorized)
+		return
+	}
+
+	consulta := `INSERT INTO notificacion (id_usuario, id_contenido) VALUES ($1, $2)`
+	_, errbd := db.BaseDeDatos.Exec(consulta, id, datos["id_contenido"])
+
+	if errbd != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"mensaje":"Error al marcar notifiación"}`))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"mensaje":"Se le notificará cuando el contenido se estrene"}`))
+}
+func EliminarNotificacion(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Methods", "DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if r.Method != http.MethodDelete {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	idContenido := 0
+	fmt.Sscanf(r.URL.Query().Get("id_contenido"), "%d", &idContenido)
+
+	token := ""
+	fmt.Sscanf(r.URL.Query().Get("token"), "%s", &token)
+
+	usuario, errorUsuario := jwt.GetUsernameFromToken(token)
+	if errorUsuario != nil {
+		utils.DevolverError(w, http.StatusUnauthorized)
+		return
+	}
+
+	consulta := `DELETE FROM notificacion n
+				USING usuario u
+				WHERE u.id = n.id_usuario
+				  AND u.nombre_usuario = $1
+				  AND n.id_contenido = $2;
+				`
+	_, errbd := db.BaseDeDatos.Exec(consulta, usuario, idContenido)
+
+	if errbd != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"mensaje":"Error"}`))
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"mensaje":"Ya no se le notificará cuando el contenido se estrene"}`))
 }
