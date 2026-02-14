@@ -1,0 +1,1 @@
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build     -ldflags="-X github.com/evcc-io/evcc/server.Version=0.112.5-next -s -w" main.go

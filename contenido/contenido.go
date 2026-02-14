@@ -304,20 +304,21 @@ func GetImagen(w http.ResponseWriter, r *http.Request) {
 
 	file, err := os.Open("imagenes/" + nombreImagen)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error al abrir imagen", nombreImagen, err)
 		return
 	}
 	defer file.Close()
 	data := make([]byte, fileInfo.Size())
 	_, err = file.Read(data)
 	if err != nil {
-		log.Println(err)
+		log.Println("Error devolviendo imagen", nombreImagen, err)
 	}
 
 	w.WriteHeader(http.StatusOK)
 
 	if tipo == "blob" {
 		w.Header().Set("Content-Type", "image/jpg; charset=utf-8")
+		fmt.Println("blob:", nombreImagen)
 		w.Write(data)
 	} else {
 		w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")

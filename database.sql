@@ -1,3 +1,7 @@
+--sudo -u postgres createdb pureflix
+--sudo -u postgres psql -d pureflix
+CREATE USER pgadmin WITH PASSWORD 'mandioca';
+
 CREATE TABLE actor(
                       id serial PRIMARY KEY,
                       nombre text,
@@ -64,6 +68,8 @@ CREATE TABLE metodo_pago(
                            id serial PRIMARY KEY,
                             descripcion text
 );
+
+CREATE EXTENSION IF NOT EXISTS citext;
 
 CREATE TABLE usuario(
                         id serial PRIMARY KEY,
@@ -1158,4 +1164,6 @@ INSERT INTO metodo_pago (descripcion) VALUES
                                           ('Transferencia bancaria'),
                                           ('PagoFácil'),
                                           ('Rapipago');
+
+
 
