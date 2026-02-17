@@ -1,6 +1,7 @@
 package mail
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
@@ -16,7 +17,7 @@ func EnviarMailDeValidacion(emailUsuario string, tokenActivacion string) {
 	mailHost := os.Getenv("MAIL_HOST")
 	mailPort, _ := strconv.Atoi(os.Getenv("MAIL_PORT"))
 	frontURL := os.Getenv("FRONT_URL")
-
+	fmt.Println(frontURL)
 	m.SetHeader("From", from)
 	m.SetHeader("To", emailUsuario)
 	m.SetHeader("Subject", "Activá tu cuenta Pureflix")
