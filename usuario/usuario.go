@@ -9,9 +9,55 @@ import (
 	"pureflix-go/jwt"
 	"pureflix-go/mail"
 	"pureflix-go/utils"
+	"regexp"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+func validarPassword(password string) bool {
+
+	tieneMayuscula := regexp.MustCompile(`[A-Z]`).MatchString(password)
+	tieneMinuscula := regexp.MustCompile(`[a-z]`).MatchString(password)
+	tieneNumero := regexp.MustCompile(`\d`).MatchString(password)
+	tieneSimbolo := regexp.MustCompile(`[!@#$%^&*(),.?":{}|<>]`).MatchString(password)
+	cumpleLargo := len(password) >= 8
+
+	return tieneMayuscula &&
+		tieneMinuscula &&
+		tieneNumero &&
+		tieneSimbolo &&
+		cumpleLargo
+}
+func usuarioExiste(usuario string) bool {
+
+	var existe bool
+
+	query := `SELECT EXISTS(SELECT 1 FROM usuario WHERE nombre_usuario=$1)`
+
+	err := db.BaseDeDatos.QueryRow(query, usuario).Scan(&existe)
+
+	if err != nil {
+		fmt.Println("Error verificando usuario:", err)
+		return true
+	}
+
+	return existe
+}
+func emailExiste(email string) bool {
+
+	var existe bool
+
+	query := `SELECT EXISTS(SELECT 1 FROM usuario WHERE email=$1)`
+
+	err := db.BaseDeDatos.QueryRow(query, email).Scan(&existe)
+
+	if err != nil {
+		fmt.Println("Error verificando email:", err)
+		return true
+	}
+
+	return existe
+}
 
 func RegistrarNuevoUsuario(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -46,12 +92,32 @@ func RegistrarNuevoUsuario(w http.ResponseWriter, r *http.Request) {
 		metodoPagoID = 0
 	}
 
+	if !validarPassword(datos["pass"]) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"mensaje":"La contraseña no cumple los requisitos."}`))
+		return
+	}
+
+	if usuarioExiste(datos["nombre_usuario"]) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"mensaje":"El nombre de usuario ya está en uso"}`))
+		return
+	}
+
+	if emailExiste(datos["email"]) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"mensaje":"El email ya está registrado"}`))
+		return
+	}
+
 	tokenValidacion, errorTokenValidacion := utils.GenerateToken()
 	if errorTokenValidacion != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	mail.EnviarMailDeValidacion(datos["email"], tokenValidacion)
+	if validarPassword(datos["pass"]) || !usuarioExiste(datos["nombre_usuario"]) || !emailExiste(datos["email"]) {
+		mail.EnviarMailDeValidacion(datos["email"], tokenValidacion)
+	}
 
 	consulta := `
 		INSERT INTO usuario (nombre_usuario, email, pass, token_validacion ,metodo_pago)
@@ -59,7 +125,7 @@ func RegistrarNuevoUsuario(w http.ResponseWriter, r *http.Request) {
 
 	hash, errorHash := bcrypt.GenerateFromPassword([]byte(datos["pass"]), bcrypt.DefaultCost)
 	if errorHash != nil {
-		fmt.Println("Error al generar la clave bcrypt:", err)
+		fmt.Println("Error al generar la clave bcrypt:", errorHash)
 		utils.DevolverError(w, http.StatusInternalServerError)
 		return
 	}
